@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,31 +8,72 @@ import { Separator } from "@/components/ui/separator";
 import { Shield, Mail, Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<"participant" | "clinician">("participant");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { signIn, signUp, user, userRole } = useAuth();
 
-  const handleAuth = () => {
-    // For now, this is a mock authentication
-    // In a real app, this would need Supabase integration
-    toast({
-      title: isSignUp ? "Account created!" : "Signed in successfully",
-      description: "Redirecting to your dashboard...",
-    });
-
-    // Simulate role-based routing
-    setTimeout(() => {
-      if (role === "participant") {
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (user && userRole) {
+      if (userRole === "participant") {
         navigate('/consent');
       } else {
         navigate('/dashboard');
       }
-    }, 1000);
+    }
+  }, [user, userRole, navigate]);
+
+  const handleAuth = async () => {
+    if (!email || !password) {
+      toast({
+        title: "Error",
+        description: "Please fill in all fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+    
+    try {
+      let result;
+      if (isSignUp) {
+        result = await signUp(email, password, role);
+      } else {
+        result = await signIn(email, password);
+      }
+
+      if (result.error) {
+        toast({
+          title: "Error",
+          description: result.error,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: isSignUp ? "Account created!" : "Signed in successfully",
+          description: "Redirecting to your dashboard...",
+        });
+        
+        // Navigation will be handled by useEffect above
+      }
+    } catch (error) {
+      toast({
+        title: "Error", 
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -92,9 +133,9 @@ const Auth = () => {
                 className="w-full" 
                 size="lg"
                 onClick={handleAuth}
-                disabled={!email || !password}
+                disabled={!email || !password || loading}
               >
-                {isSignUp ? "Create Account" : "Sign In"}
+                {loading ? "Loading..." : (isSignUp ? "Create Account" : "Sign In")}
               </Button>
 
               <div className="text-center">
@@ -135,8 +176,7 @@ const Auth = () => {
           </Card>
 
           <p className="text-xs text-muted-foreground text-center">
-            This is a proof of concept. For backend functionality including authentication, 
-            you'll need to connect to Supabase using the integration button.
+            Supabase is connected. Your authentication and data will be securely stored.
           </p>
         </div>
       </div>
