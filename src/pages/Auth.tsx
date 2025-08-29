@@ -41,6 +41,15 @@ const Auth = () => {
       return;
     }
 
+    if (password.length < 6) {
+      toast({
+        title: "Error",
+        description: "Password must be at least 6 characters long",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     
     try {
@@ -52,23 +61,37 @@ const Auth = () => {
       }
 
       if (result.error) {
+        // Provide specific error messages for common auth failures
+        let errorMessage = result.error;
+        
+        if (result.error.includes("Invalid login credentials")) {
+          errorMessage = "Invalid email or password. Please check your credentials and try again.";
+        } else if (result.error.includes("Email not confirmed")) {
+          errorMessage = "Please check your email and click the confirmation link before signing in.";
+        } else if (result.error.includes("Too many requests")) {
+          errorMessage = "Too many login attempts. Please wait a moment before trying again.";
+        } else if (result.error.includes("User already registered")) {
+          errorMessage = "An account with this email already exists. Try signing in instead.";
+        }
+
         toast({
-          title: "Error",
-          description: result.error,
+          title: isSignUp ? "Registration Failed" : "Sign In Failed",
+          description: errorMessage,
           variant: "destructive",
         });
       } else {
         toast({
           title: isSignUp ? "Account created!" : "Signed in successfully",
-          description: "Redirecting to your dashboard...",
+          description: isSignUp ? "Please check your email to confirm your account" : "Redirecting to your dashboard...",
         });
         
         // Navigation will be handled by useEffect above
       }
     } catch (error) {
+      console.error("Auth error:", error);
       toast({
-        title: "Error", 
-        description: "An unexpected error occurred",
+        title: "Authentication Error", 
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
     } finally {
