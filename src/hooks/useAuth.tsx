@@ -87,42 +87,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: {
+          role,
+          name: email.split('@')[0],
+          display_name: email.split('@')[0],
+        },
+      },
     })
 
     if (error) {
       return { error: error.message }
-    }
-
-    if (data.user) {
-      // Create user record with role
-      const { error: userError } = await supabase
-        .from('users')
-        .insert({
-          id: data.user.id,
-          email: data.user.email!,
-          role: role,
-        })
-
-      if (userError) {
-        return { error: userError.message }
-      }
-
-      // Create role-specific profile
-      if (role === 'participant') {
-        await supabase
-          .from('participants')
-          .insert({
-            id: data.user.id,
-            display_name: email.split('@')[0],
-          })
-      } else if (role === 'clinician') {
-        await supabase
-          .from('clinicians')
-          .insert({
-            id: data.user.id,
-            name: email.split('@')[0],
-          })
-      }
     }
 
     return {}
