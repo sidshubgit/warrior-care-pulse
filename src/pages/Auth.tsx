@@ -80,12 +80,22 @@ const Auth = () => {
           variant: "destructive",
         });
       } else {
-        toast({
-          title: isSignUp ? "Account created!" : "Signed in successfully",
-          description: isSignUp ? "Please check your email to confirm your account" : "Redirecting to your dashboard...",
-        });
+        if (isSignUp) {
+          toast({
+            title: "Account created!",
+            description: "Please check your email to confirm your account, then sign in.",
+          });
+          // Switch to login mode after successful signup
+          setIsSignUp(false);
+          setPassword(""); // Clear password for security
+        } else {
+          toast({
+            title: "Signed in successfully",
+            description: "Redirecting to your dashboard...",
+          });
+        }
         
-        // Navigation will be handled by useEffect above
+        // Navigation will be handled by useEffect above for sign in
       }
     } catch (error) {
       console.error("Auth error:", error);
@@ -121,36 +131,58 @@ const Auth = () => {
                 }
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="your.email@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
+              <CardContent className="space-y-4">
+                {isSignUp && (
+                  <div className="space-y-2">
+                    <Label>I am a:</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        variant={role === "participant" ? "default" : "outline"}
+                        onClick={() => setRole("participant")}
+                        className="justify-start"
+                      >
+                        Service Member
+                      </Button>
+                      <Button
+                        variant={role === "clinician" ? "default" : "outline"}
+                        onClick={() => setRole("clinician")}
+                        className="justify-start"
+                      >
+                        Clinician
+                      </Button>
+                    </div>
+                  </div>
+                )}
 
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="Your secure password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10"
-                  />
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="your.email@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
                 </div>
-              </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="Your secure password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
 
               <Button 
                 className="w-full" 
@@ -176,25 +208,6 @@ const Auth = () => {
 
               <Separator />
 
-              <div className="space-y-2">
-                <Label>I am a:</Label>
-                <div className="grid grid-cols-2 gap-2">
-                  <Button
-                    variant={role === "participant" ? "default" : "outline"}
-                    onClick={() => setRole("participant")}
-                    className="justify-start"
-                  >
-                    Service Member
-                  </Button>
-                  <Button
-                    variant={role === "clinician" ? "default" : "outline"}
-                    onClick={() => setRole("clinician")}
-                    className="justify-start"
-                  >
-                    Clinician
-                  </Button>
-                </div>
-              </div>
             </CardContent>
           </Card>
 
