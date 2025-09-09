@@ -1,5 +1,7 @@
 import { ReactNode } from "react";
 import { Shield, Heart, Brain } from "lucide-react";
+import { UserMenu } from "@/components/UserMenu";
+import { useAuth } from "@/hooks/useAuth";
 
 interface LayoutProps {
   children: ReactNode;
@@ -7,6 +9,8 @@ interface LayoutProps {
 }
 
 export const Layout = ({ children, showHeader = true }: LayoutProps) => {
+  const { user } = useAuth();
+
   return (
     <div className="min-h-screen bg-background">
       {showHeader && (
@@ -21,10 +25,13 @@ export const Layout = ({ children, showHeader = true }: LayoutProps) => {
                 <p className="text-xs text-muted-foreground">Confidential Check-ins. Clear Insights.</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Heart className="w-4 h-4" />
-              <Brain className="w-4 h-4" />
-              <span className="font-medium">AS Solutions</span>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Heart className="w-4 h-4" />
+                <Brain className="w-4 h-4" />
+                <span className="font-medium">AS Solutions</span>
+              </div>
+              {user && <UserMenu />}
             </div>
           </div>
         </header>

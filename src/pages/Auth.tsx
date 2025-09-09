@@ -9,6 +9,7 @@ import { Shield, Mail, Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -23,13 +24,36 @@ const Auth = () => {
   // Redirect if already authenticated
   useEffect(() => {
     if (user && userRole) {
-      if (userRole === "participant") {
-        navigate('/consent');
-      } else {
+      if (userRole === "clinician") {
         navigate('/dashboard');
+      } else {
+        // For participants, check if they have given consent
+        checkConsentAndRedirect();
       }
     }
   }, [user, userRole, navigate]);
+
+  const checkConsentAndRedirect = async () => {
+    if (!user) return;
+    
+    try {
+      const { data: consent } = await supabase
+        .from('consents')
+        .select('accepted')
+        .eq('participant_id', user.id)
+        .eq('accepted', true)
+        .maybeSingle();
+
+      if (consent) {
+        navigate('/checkin');
+      } else {
+        navigate('/consent');
+      }
+    } catch (error) {
+      console.error('Error checking consent:', error);
+      navigate('/consent'); // Default to consent page if error
+    }
+  };
 
   const handleAuth = async () => {
     if (!email || !password) {

@@ -8,13 +8,17 @@ import { Separator } from "@/components/ui/separator";
 import { Shield, FileText, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 const Consent = () => {
   const [accepted, setAccepted] = useState(false);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
 
-  const handleAccept = () => {
+  const handleAccept = async () => {
     if (!accepted) {
       toast({
         title: "Consent Required",
@@ -24,12 +28,54 @@ const Consent = () => {
       return;
     }
 
-    toast({
-      title: "Consent Accepted",
-      description: "Welcome to WarriorCare AI. You can begin your wellness journey.",
-    });
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "User not authenticated. Please sign in again.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    navigate('/checkin');
+    setLoading(true);
+
+    try {
+      // Save consent to database
+      const { error } = await supabase
+        .from('consents')
+        .insert({
+          participant_id: user.id,
+          accepted: true,
+          accepted_at: new Date().toISOString(),
+          version: 'v1'
+        });
+
+      if (error) {
+        console.error('Error saving consent:', error);
+        toast({
+          title: "Error",
+          description: "Failed to save consent. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: "Consent Accepted",
+        description: "Welcome to WarriorCare AI. You can begin your wellness journey.",
+      });
+
+      navigate('/checkin');
+    } catch (error) {
+      console.error('Error saving consent:', error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDecline = () => {
@@ -130,15 +176,16 @@ const Consent = () => {
                 <Button 
                   size="lg" 
                   onClick={handleAccept}
-                  disabled={!accepted}
+                  disabled={!accepted || loading}
                   className="flex-1"
                 >
-                  Accept & Continue
+                  {loading ? "Saving..." : "Accept & Continue"}
                 </Button>
                 <Button 
                   variant="outline" 
                   size="lg" 
                   onClick={handleDecline}
+                  disabled={loading}
                   className="flex-1"
                 >
                   Decline
