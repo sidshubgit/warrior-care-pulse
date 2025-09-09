@@ -25,20 +25,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       setUser(session?.user ?? null)
+      
       if (session?.user) {
-        fetchUserRole(session.user.id)
+        // Get role from user metadata first, fallback to database
+        const roleFromMetadata = session.user.user_metadata?.role
+        if (roleFromMetadata) {
+          setUserRole(roleFromMetadata)
+          setLoading(false)
+        } else {
+          fetchUserRole(session.user.id)
+        }
       } else {
         setLoading(false)
       }
     })
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session)
       setUser(session?.user ?? null)
       
       if (session?.user) {
-        await fetchUserRole(session.user.id)
+        // Get role from user metadata first, fallback to database
+        const roleFromMetadata = session.user.user_metadata?.role
+        if (roleFromMetadata) {
+          setUserRole(roleFromMetadata)
+          setLoading(false)
+        } else {
+          setTimeout(() => {
+            fetchUserRole(session.user.id)
+          }, 0)
+        }
       } else {
         setUserRole(null)
         setLoading(false)
