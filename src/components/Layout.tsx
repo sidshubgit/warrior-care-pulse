@@ -26,11 +26,6 @@ export const Layout = ({ children, showHeader = true }: LayoutProps) => {
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Heart className="w-4 h-4" />
-                <Brain className="w-4 h-4" />
-                <span className="font-medium">AS Solutions</span>
-              </div>
               {user && <UserMenu />}
             </div>
           </div>

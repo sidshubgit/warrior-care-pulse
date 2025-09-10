@@ -11,6 +11,8 @@ import { Separator } from "@/components/ui/separator";
 import { Heart, Moon, Zap, Brain, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 const DailyCheckIn = () => {
   const [mood, setMood] = useState([3]);
@@ -21,8 +23,9 @@ const DailyCheckIn = () => {
   const [journalText, setJournalText] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     // Basic validation
     if (!sleepHours || parseFloat(sleepHours) < 0 || parseFloat(sleepHours) > 16) {
       toast({
@@ -42,6 +45,15 @@ const DailyCheckIn = () => {
       return;
     }
 
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "User not authenticated. Please sign in again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Mock AI risk assessment
     const phqScore = parseInt(phq1) + parseInt(phq2);
     const hasRiskKeywords = journalText.toLowerCase().includes('hopeless') || 
@@ -53,20 +65,32 @@ const DailyCheckIn = () => {
       risk = phqScore >= 5 || hasRiskKeywords ? "red" : "amber";
     }
 
+    // Save check-in to database
+    const { error: checkInError } = await supabase
+      .from('check_ins')
+      .insert({
+        participant_id: user.id,
+        mood: mood[0],
+        sleep: parseFloat(sleepHours),
+        pain: pain[0],
+        phq_score: phqScore,
+        journal_text: journalText,
+        risk_level: risk
+      });
+
+    if (checkInError) {
+      console.error('Error saving check-in:', checkInError);
+      toast({
+        title: "Error",
+        description: "Failed to save check-in. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     toast({
       title: "Check-in Saved",
       description: `Your daily check-in has been recorded. Risk level: ${risk.toUpperCase()}`,
-    });
-
-    // In a real app, this would save to Supabase
-    console.log({
-      mood: mood[0],
-      sleepHours: parseFloat(sleepHours),
-      pain: pain[0],
-      phqScore,
-      journalText,
-      risk,
-      timestamp: new Date().toISOString()
     });
 
     navigate('/history');
