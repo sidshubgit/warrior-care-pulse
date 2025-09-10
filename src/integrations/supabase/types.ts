@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      care_team: {
+        Row: {
+          clinician_id: string
+          created_at: string
+          id: string
+          participant_id: string
+        }
+        Insert: {
+          clinician_id: string
+          created_at?: string
+          id?: string
+          participant_id: string
+        }
+        Update: {
+          clinician_id?: string
+          created_at?: string
+          id?: string
+          participant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "care_team_clinician_id_fkey"
+            columns: ["clinician_id"]
+            isOneToOne: false
+            referencedRelation: "clinicians"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "care_team_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       check_ins: {
         Row: {
           created_at: string
