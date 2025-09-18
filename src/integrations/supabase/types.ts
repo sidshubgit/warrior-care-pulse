@@ -90,15 +90,7 @@ export type Database = {
           sleep?: number
           symptoms?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "check_ins_participant_id_fkey"
-            columns: ["participant_id"]
-            isOneToOne: false
-            referencedRelation: "participants"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       clinicians: {
         Row: {
